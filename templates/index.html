@@ -54,23 +54,85 @@
           <div class="field-grid">
             <label>
               <span>Dialect</span>
-              <input
-                type="text"
-                class="connection-input"
-                name="dialect"
-                value="{{ form_data.dialect }}"
-                placeholder="mysql"
-              />
+              <select class="connection-input" name="dialect">
+                <option
+                  value="mysql"
+                  {%
+                  if
+                  form_data.dialect=""
+                  ="mysql"
+                  %}selected{%
+                  endif
+                  %}
+                >
+                  mysql
+                </option>
+                <option
+                  value="postgresql"
+                  {%
+                  if
+                  form_data.dialect=""
+                  ="postgresql"
+                  %}selected{%
+                  endif
+                  %}
+                >
+                  postgresql
+                </option>
+                <option
+                  value="oracle"
+                  {%
+                  if
+                  form_data.dialect=""
+                  ="oracle"
+                  %}selected{%
+                  endif
+                  %}
+                >
+                  oracle
+                </option>
+              </select>
             </label>
             <label>
               <span>Driver</span>
-              <input
-                type="text"
-                class="connection-input"
-                name="driver"
-                value="{{ form_data.driver }}"
-                placeholder="pymysql"
-              />
+              <select class="connection-input" name="driver">
+                <option
+                  value="pymysql"
+                  {%
+                  if
+                  form_data.driver=""
+                  ="pymysql"
+                  %}selected{%
+                  endif
+                  %}
+                >
+                  pymysql
+                </option>
+                <option
+                  value="psycopg"
+                  {%
+                  if
+                  form_data.driver=""
+                  ="psycopg"
+                  %}selected{%
+                  endif
+                  %}
+                >
+                  psycopg
+                </option>
+                <option
+                  value="oracledb"
+                  {%
+                  if
+                  form_data.driver=""
+                  ="oracledb"
+                  %}selected{%
+                  endif
+                  %}
+                >
+                  oracledb
+                </option>
+              </select>
             </label>
             <label>
               <span>Host</span>
@@ -132,6 +194,11 @@
               />
             </label>
           </div>
+
+          <p class="helper-note">
+            Presets: MySQL = mysql/pymysql/3306, PostgreSQL =
+            postgresql/psycopg/5432, Oracle = oracle/oracledb/1521.
+          </p>
 
           <div class="toggle-row">
             <label class="checkbox">

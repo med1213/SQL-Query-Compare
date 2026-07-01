@@ -23,7 +23,7 @@ The script:
 ## Requirements
 
 - Python 3.10+
-- Access to MariaDB, MySQL, or PostgreSQL
+- Access to MariaDB, MySQL, PostgreSQL, or Oracle
 
 Install dependencies:
 
@@ -50,6 +50,32 @@ The default website values are already set for MariaDB:
 - dialect: `mysql`
 - driver: `pymysql`
 - port: `3306`
+
+Use these Dialect + Driver values in the form:
+
+1. MySQL
+
+- Dialect: `mysql`
+- Driver: `pymysql`
+- Port: `3306`
+
+2. PostgreSQL
+
+- Dialect: `postgresql`
+- Driver: `psycopg`
+- Port: `5432`
+
+3. Oracle
+
+- Dialect: `oracle`
+- Driver: `oracledb`
+- Port: usually `1521`
+
+If you use Oracle, install the Oracle DB driver first:
+
+```bash
+pip install oracledb
+```
 
 ### CLI
 
@@ -78,3 +104,4 @@ python compare_queries.py query_a.sql query_b.sql --url mysql+pymysql://myuser:m
 - If both queries return different rows, the tool will not declare a winner automatically.
 - MariaDB works with the included `mysql+pymysql` configuration.
 - Included drivers cover MariaDB, MySQL, and PostgreSQL. For other databases, install the matching SQLAlchemy driver and pass the correct dialect and optional driver.
+- For Oracle service-name connections, URL examples can look like: `oracle+oracledb://user:password@host:1521/?service_name=ORCLPDB1`.
