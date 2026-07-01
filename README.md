@@ -45,23 +45,6 @@ python app.py
 
 Then open `http://127.0.0.1:5000` and paste SQL A and SQL B into the form. If both queries run successfully, the page shows the comparison in HTML tables.
 
-Bind parameters are supported for both scripts using one shared JSON object. Use named placeholders in SQL, for example `:vdate`, and set values in the **Bind Parameters JSON** field.
-
-Example SQL:
-
-```sql
-with par as (select :vdate as vdate)
-select * from my_table where ac_date = (select vdate from par)
-```
-
-Example parameters JSON:
-
-```json
-{ "vdate": "20260701" }
-```
-
-Do not use `%s` placeholders in this tool. `%s` is a driver placeholder style and is not valid when pasting plain SQL text here.
-
 The default website values are already set for MariaDB:
 
 - dialect: `mysql`
@@ -112,12 +95,6 @@ Enable debug traceback and JSON output:
 
 ```bash
 python compare_queries.py query_a.sql query_b.sql --url mysql+pymysql://myuser:mypass@localhost:3306/mydb --debug --format json
-```
-
-Pass bind parameters from CLI:
-
-```bash
-python compare_queries.py query_a.sql query_b.sql --url mysql+pymysql://myuser:mypass@localhost:3306/mydb --params-json '{"vdate":"20260701"}'
 ```
 
 ## Notes

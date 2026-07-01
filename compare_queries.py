@@ -100,27 +100,9 @@ def parse_args() -> argparse.Namespace:
         default="text",
         help="Output format.",
     )
-    parser.add_argument(
-        "--params-json",
-        default=None,
-            help="Optional JSON object for named bind parameters used by both scripts, for example '{\"vdate\":\"20260701\"}'.",
-    )
+
     return parser.parse_args()
 
-
-def parse_bind_params(raw_params_json: str | None) -> dict[str, Any]:
-    if raw_params_json in (None, ""):
-        return {}
-    try:
-        payload = json.loads(raw_params_json)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Invalid params JSON: {exc.msg}") from exc
-    if not isinstance(payload, dict):
-        raise ValueError("Params JSON must be an object like {\"vdate\":\"20260701\"}.")
-        invalid_keys = [key for key in payload.keys() if not isinstance(key, str) or not key]
-    if invalid_keys:
-        raise ValueError("All params JSON keys must be non-empty strings.")
-    return payload
 
 
 def connection_config_from_args(args: argparse.Namespace) -> ConnectionConfig:
@@ -196,7 +178,6 @@ def execute_query(
     sql_text: str,
     debug: bool,
     sample_size: int,
-    bind_params: dict[str, Any],
 ) -> QueryRunResult:
     from sqlalchemy import create_engine, text
 
@@ -207,16 +188,7 @@ def execute_query(
             transaction = connection.begin()
             try:
                 statement = text(sql_text)
-                bind_keys = set(statement._bindparams.keys())
-                missing_keys = sorted(bind_keys - set(bind_params.keys()))
-                if missing_keys:
-                    missing_display = ", ".join(missing_keys)
-                    raise ValueError(
-                        f"Missing bind parameter values for: {missing_display}. "
-                        "Use named placeholders like :vdate and provide values in params JSON."
-                    )
-                execution_params = {key: bind_params[key] for key in bind_keys}
-                result = connection.execute(statement, execution_params)
+                result = connection.execute(statement)
                 rows = result.fetchall() if result.returns_rows else []
                 transaction.rollback()
             except Exception:
@@ -346,10 +318,8 @@ def run_comparison(
     debug: bool = False,
     query_a_name: str = "Query A",
     query_b_name: str = "Query B",
-    bind_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     engine_url = build_connection_string(config)
-    params = bind_params or {}
     result_a = execute_query(
         engine_url,
         query_a_name,
@@ -357,7 +327,6 @@ def run_comparison(
         query_a_sql,
         debug,
         sample_size,
-        params,
     )
     result_b = execute_query(
         engine_url,
@@ -366,7 +335,6 @@ def run_comparison(
         query_b_sql,
         debug,
         sample_size,
-        params,
     )
     comparison = compare_results(result_a, result_b, sample_size)
     return {
@@ -432,7 +400,6 @@ def main() -> int:
     try:
         query_a_path, query_a_sql = load_sql(args.query_a)
         query_b_path, query_b_sql = load_sql(args.query_b)
-        bind_params = parse_bind_params(args.params_json)
         payload = run_comparison(
             connection_config_from_args(args),
             query_a_sql,
@@ -441,7 +408,6 @@ def main() -> int:
             debug=args.debug,
             query_a_name=str(query_a_path),
             query_b_name=str(query_b_path),
-            bind_params=bind_params,
         )
     except Exception as exc:
         print(f"Setup error: {exc}", file=sys.stderr)

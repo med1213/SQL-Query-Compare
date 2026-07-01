@@ -9,7 +9,6 @@ from compare_queries import (
     ConnectionConfig,
     DEFAULT_SAMPLE_SIZE,
     load_environment,
-    parse_bind_params,
     run_comparison,
     test_connection,
 )
@@ -28,7 +27,6 @@ def default_form_data() -> dict[str, Any]:
         "user": os.getenv("DB_USER", ""),
         "password": os.getenv("DB_PASSWORD", ""),
         "sample_size": str(DEFAULT_SAMPLE_SIZE),
-        "params_json": '{"vdate":"20260701"}',
         "debug": False,
         "query_a": "",
         "query_b": "",
@@ -70,7 +68,6 @@ def build_form_data(form: Any) -> dict[str, Any]:
         "user": form.get("user", "").strip(),
         "password": form.get("password", ""),
         "sample_size": form.get("sample_size", str(DEFAULT_SAMPLE_SIZE)).strip(),
-        "params_json": form.get("params_json", "").strip(),
         "debug": form.get("debug") == "on",
         "query_a": form.get("query_a", "").strip(),
         "query_b": form.get("query_b", "").strip(),
@@ -132,7 +129,6 @@ def index() -> str:
                     elif not form_data["query_a"] or not form_data["query_b"]:
                         setup_error = "Paste both SQL scripts before running the comparison."
                     else:
-                        bind_params = parse_bind_params(form_data["params_json"])
                         payload = run_comparison(
                             config,
                             form_data["query_a"],
@@ -141,7 +137,6 @@ def index() -> str:
                             debug=form_data["debug"],
                             query_a_name="Query A",
                             query_b_name="Query B",
-                            bind_params=bind_params,
                         )
             except Exception as exc:
                 setup_error = str(exc)

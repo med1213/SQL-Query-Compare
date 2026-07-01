@@ -134,20 +134,6 @@
             postgresql/psycopg/5432, Oracle = oracle/oracledb/1521.
           </p>
 
-          <label>
-            <span>Bind Parameters JSON (shared by both scripts)</span>
-            <textarea
-              id="params_json"
-              name="params_json"
-              rows="3"
-              placeholder='{"vdate":"20260701"}'
-            >{{ form_data.params_json }}</textarea>
-          </label>
-
-          <p class="helper-note">
-            Use named placeholders like <strong>:vdate</strong> in SQL, then set values in JSON above.
-          </p>
-
           <div class="toggle-row">
             <label class="checkbox">
               <input
