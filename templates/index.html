@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQL Compare</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <main class="page-shell">
+      {% if setup_error or connection_ok_message %}
+      <section class="toast-stack" aria-live="polite" aria-atomic="true">
+        {% if setup_error %}
+        <article class="toast toast-error">
+          <h2>Setup Error</h2>
+          <p>{{ setup_error }}</p>
+        </article>
+        {% endif %} {% if connection_ok_message %}
+        <article class="toast toast-success">
+          <h2>Connection Status</h2>
+          <p>{{ connection_ok_message }}</p>
+        </article>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      <section class="hero">
+        <p class="eyebrow">Database Query Review</p>
+        <h1>Paste two SQL scripts and compare them side by side.</h1>
+        <p class="lead">
+          The app runs both queries against the same connection, measures speed,
+          highlights result differences, and catches execution errors.
+        </p>
+      </section>
+
+      <section class="panel">
+        <form method="post" class="compare-form">
+          <input
+            type="hidden"
+            name="connection_verified"
+            id="connection_verified"
+            value="{{ '1' if connection_verified else '0' }}"
+          />
+          <input
+            type="hidden"
+            name="connection_signature"
+            id="connection_signature"
+            value="{{ form_data.connection_signature }}"
+          />
+
+          <div class="field-grid">
+            <label>
+              <span>Dialect</span>
+              <input
+                type="text"
+                class="connection-input"
+                name="dialect"
+                value="{{ form_data.dialect }}"
+                placeholder="mysql"
+              />
+            </label>
+            <label>
+              <span>Driver</span>
+              <input
+                type="text"
+                class="connection-input"
+                name="driver"
+                value="{{ form_data.driver }}"
+                placeholder="pymysql"
+              />
+            </label>
+            <label>
+              <span>Host</span>
+              <input
+                type="text"
+                class="connection-input"
+                name="host"
+                value="{{ form_data.host }}"
+                placeholder="localhost"
+              />
+            </label>
+            <label>
+              <span>Port</span>
+              <input
+                type="text"
+                class="connection-input"
+                name="port"
+                value="{{ form_data.port }}"
+                placeholder="3306"
+              />
+            </label>
+            <label>
+              <span>Database Name</span>
+              <input
+                type="text"
+                class="connection-input"
+                name="database"
+                value="{{ form_data.database }}"
+                placeholder="mydb"
+              />
+            </label>
+            <label>
+              <span>User</span>
+              <input
+                type="text"
+                class="connection-input"
+                name="user"
+                value="{{ form_data.user }}"
+                placeholder="dbuser"
+              />
+            </label>
+            <label>
+              <span>Password</span>
+              <input
+                type="password"
+                class="connection-input"
+                name="password"
+                value="{{ form_data.password }}"
+                placeholder="password"
+              />
+            </label>
+            <label>
+              <span>Sample Size</span>
+              <input
+                type="number"
+                min="1"
+                name="sample_size"
+                value="{{ form_data.sample_size }}"
+              />
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <label class="checkbox">
+              <input
+                type="checkbox"
+                name="debug"
+                {%
+                if
+                form_data.debug
+                %}checked{%
+                endif
+                %}
+              />
+              <span>Include traceback in error output</span>
+            </label>
+            <div class="button-row">
+              <button
+                type="submit"
+                name="form_action"
+                value="test_connection"
+                class="button-secondary"
+              >
+                Test Connection
+              </button>
+              <button
+                id="close_connection_button"
+                type="submit"
+                name="form_action"
+                value="close_connection"
+                class="button-danger"
+                {%
+                if
+                not
+                connection_verified
+                %}disabled{%
+                endif
+                %}
+              >
+                Close Connection
+              </button>
+            </div>
+          </div>
+
+          <div class="sql-grid">
+            <label>
+              <span>Script A</span>
+              <textarea
+                id="query_a"
+                name="query_a"
+                rows="14"
+                placeholder="Paste SQL script A here"
+                {%
+                if
+                not
+                connection_verified
+                %}disabled{%
+                endif
+                %}
+              >
+{{ form_data.query_a }}</textarea
+              >
+            </label>
+            <label>
+              <span>Script B</span>
+              <textarea
+                id="query_b"
+                name="query_b"
+                rows="14"
+                placeholder="Paste SQL script B here"
+                {%
+                if
+                not
+                connection_verified
+                %}disabled{%
+                endif
+                %}
+              >
+{{ form_data.query_b }}</textarea
+              >
+            </label>
+          </div>
+
+          <div class="compare-action-row">
+            <button
+              type="submit"
+              name="form_action"
+              value="clear_scripts"
+              class="button-ghost"
+            >
+              Clear
+            </button>
+            <button
+              id="compare_button"
+              type="submit"
+              name="form_action"
+              value="compare"
+              {%
+              if
+              not
+              connection_verified
+              %}disabled{%
+              endif
+              %}
+            >
+              Compare
+            </button>
+          </div>
+
+          {% if not connection_verified %}
+          <p class="helper-note">
+            Run Test Connection first. Script inputs unlock only after
+            successful host connection.
+          </p>
+          {% endif %}
+        </form>
+      </section>
+
+      {% if comparison and result_a and result_b %}
+      <section class="panel">
+        <h2>Summary</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Check</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Query A speed</td>
+              <td>{{ '%.2f'|format(result_a.duration_ms) }} ms</td>
+            </tr>
+            <tr>
+              <td>Query B speed</td>
+              <td>{{ '%.2f'|format(result_b.duration_ms) }} ms</td>
+            </tr>
+            <tr>
+              <td>Same columns</td>
+              <td>{{ comparison.same_columns }}</td>
+            </tr>
+            <tr>
+              <td>Same rows</td>
+              <td>{{ comparison.same_rows }}</td>
+            </tr>
+            <tr>
+              <td>Winner</td>
+              <td>{{ comparison.winner or 'No automatic winner' }}</td>
+            </tr>
+            <tr>
+              <td>Reason</td>
+              <td>{{ comparison.reason }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      {% if not result_a.success or not result_b.success %}
+      <section class="results-grid">
+        {% for result in [result_a, result_b] %} {% if not result.success %}
+        <article class="panel status error">
+          <h2>{{ result.label }} Error</h2>
+          <p>
+            <strong>{{ result.error_type }}</strong>: {{ result.error_message }}
+          </p>
+          {% if result.traceback_text %}
+          <pre>{{ result.traceback_text }}</pre>
+          {% endif %}
+        </article>
+        {% endif %} {% endfor %}
+      </section>
+      {% endif %} {% if has_successful_results %}
+      <section class="results-grid">
+        <article class="panel">
+          <h2>Query A Preview</h2>
+          <table>
+            <thead>
+              <tr>
+                {% for column in result_a.columns %}
+                <th>{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in result_a.sample_rows %}
+              <tr>
+                {% for column in result_a.columns %}
+                <td>{{ row[column] }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel">
+          <h2>Query B Preview</h2>
+          <table>
+            <thead>
+              <tr>
+                {% for column in result_b.columns %}
+                <th>{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in result_b.sample_rows %}
+              <tr>
+                {% for column in result_b.columns %}
+                <td>{{ row[column] }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section class="results-grid">
+        <article class="panel">
+          <h2>Rows Only in Query A</h2>
+          {% if comparison.rows_only_in_a %}
+          <table>
+            <thead>
+              <tr>
+                {% for header in diff_headers_a %}
+                <th>{{ header }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in comparison.rows_only_in_a %}
+              <tr>
+                {% for value in row %}
+                <td>{{ value }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="empty-state">
+            No row-only differences for Query A in the sampled output.
+          </p>
+          {% endif %}
+        </article>
+
+        <article class="panel">
+          <h2>Rows Only in Query B</h2>
+          {% if comparison.rows_only_in_b %}
+          <table>
+            <thead>
+              <tr>
+                {% for header in diff_headers_b %}
+                <th>{{ header }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in comparison.rows_only_in_b %}
+              <tr>
+                {% for value in row %}
+                <td>{{ value }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="empty-state">
+            No row-only differences for Query B in the sampled output.
+          </p>
+          {% endif %}
+        </article>
+      </section>
+      {% endif %} {% endif %}
+    </main>
+
+    <script>
+      (function () {
+        const verifiedInput = document.getElementById("connection_verified");
+        const signatureInput = document.getElementById("connection_signature");
+        const queryA = document.getElementById("query_a");
+        const queryB = document.getElementById("query_b");
+        const compareButton = document.getElementById("compare_button");
+        const closeConnectionButton = document.getElementById(
+          "close_connection_button",
+        );
+        const connectionInputs = document.querySelectorAll(".connection-input");
+
+        function lockScripts() {
+          if (
+            !verifiedInput ||
+            !signatureInput ||
+            !queryA ||
+            !queryB ||
+            !compareButton ||
+            !closeConnectionButton
+          ) {
+            return;
+          }
+          verifiedInput.value = "0";
+          signatureInput.value = "";
+          queryA.disabled = true;
+          queryB.disabled = true;
+          compareButton.disabled = true;
+          closeConnectionButton.disabled = true;
+        }
+
+        connectionInputs.forEach((input) => {
+          input.addEventListener("input", lockScripts);
+        });
+      })();
+    </script>
+  </body>
+</html>

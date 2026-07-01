@@ -1,0 +1,1 @@
+SELECT 1 AS id, 'query_a' AS source;
