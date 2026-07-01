@@ -55,83 +55,17 @@
             <label>
               <span>Dialect</span>
               <select class="connection-input" name="dialect">
-                <option
-                  value="mysql"
-                  {%
-                  if
-                  form_data.dialect=""
-                  ="mysql"
-                  %}selected{%
-                  endif
-                  %}
-                >
-                  mysql
-                </option>
-                <option
-                  value="postgresql"
-                  {%
-                  if
-                  form_data.dialect=""
-                  ="postgresql"
-                  %}selected{%
-                  endif
-                  %}
-                >
-                  postgresql
-                </option>
-                <option
-                  value="oracle"
-                  {%
-                  if
-                  form_data.dialect=""
-                  ="oracle"
-                  %}selected{%
-                  endif
-                  %}
-                >
-                  oracle
-                </option>
+                <option value="mysql" {{ 'selected' if form_data.dialect == 'mysql' else '' }}>mysql</option>
+                <option value="postgresql" {{ 'selected' if form_data.dialect == 'postgresql' else '' }}>postgresql</option>
+                <option value="oracle" {{ 'selected' if form_data.dialect == 'oracle' else '' }}>oracle</option>
               </select>
             </label>
             <label>
               <span>Driver</span>
               <select class="connection-input" name="driver">
-                <option
-                  value="pymysql"
-                  {%
-                  if
-                  form_data.driver=""
-                  ="pymysql"
-                  %}selected{%
-                  endif
-                  %}
-                >
-                  pymysql
-                </option>
-                <option
-                  value="psycopg"
-                  {%
-                  if
-                  form_data.driver=""
-                  ="psycopg"
-                  %}selected{%
-                  endif
-                  %}
-                >
-                  psycopg
-                </option>
-                <option
-                  value="oracledb"
-                  {%
-                  if
-                  form_data.driver=""
-                  ="oracledb"
-                  %}selected{%
-                  endif
-                  %}
-                >
-                  oracledb
-                </option>
+                <option value="pymysql" {{ 'selected' if form_data.driver == 'pymysql' else '' }}>pymysql</option>
+                <option value="psycopg" {{ 'selected' if form_data.driver == 'psycopg' else '' }}>psycopg</option>
+                <option value="oracledb" {{ 'selected' if form_data.driver == 'oracledb' else '' }}>oracledb</option>
               </select>
             </label>
             <label>
@@ -198,6 +132,20 @@
           <p class="helper-note">
             Presets: MySQL = mysql/pymysql/3306, PostgreSQL =
             postgresql/psycopg/5432, Oracle = oracle/oracledb/1521.
+          </p>
+
+          <label>
+            <span>Bind Parameters JSON (shared by both scripts)</span>
+            <textarea
+              id="params_json"
+              name="params_json"
+              rows="3"
+              placeholder='{"vdate":"20260701"}'
+            >{{ form_data.params_json }}</textarea>
+          </label>
+
+          <p class="helper-note">
+            Use named placeholders like <strong>:vdate</strong> in SQL, then set values in JSON above.
           </p>
 
           <div class="toggle-row">
